@@ -1,0 +1,62 @@
+name: Check profile
+
+on:
+    pull_request_target:
+        types: [opened, synchronize, reopened]
+
+permissions:
+    contents: write
+    pull-requests: write
+    actions: write
+
+concurrency:
+    group: check-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - run: npm ci
+
+            - name: Fetch pull request files
+              run: git fetch --depth 1 origin "refs/pull/${PR_NUMBER}/head"
+              env:
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+            - name: Validate
+              id: validate
+              run: node scripts/validate.js
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+            - name: Comment
+              if: steps.validate.outputs.result != 'skip'
+              run: gh pr comment "$PR_NUMBER" --body-file validation.md --edit-last --create-if-none
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+            - name: Merge and deploy
+              if: steps.validate.outputs.result == 'merge'
+              run: |
+                  gh pr merge "$PR_NUMBER" --squash --match-head-commit "$HEAD_SHA"
+                  gh workflow run deploy.yml --ref master
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+            - name: Fail
+              if: steps.validate.outputs.result == 'fail'
+              run: exit 1

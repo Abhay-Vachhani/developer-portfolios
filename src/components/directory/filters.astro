@@ -1,0 +1,155 @@
+---
+import Select from '@/components/shared/select.astro'
+import { levels, otherRole, roleGroup, roles } from '@/lib/options.js'
+
+const { profiles, tags } = Astro.props
+const presentRoles = new Set(profiles.map((profile) => roleGroup(profile.role)))
+const roleOptions = [...roles, otherRole].filter((role) => presentRoles.has(role))
+const locations = [...new Set(profiles.map((profile) => profile.location).filter(Boolean))].sort()
+const label = 'font-mono text-xs tracking-widest text-muted-foreground uppercase'
+const selects = [
+    {
+        name: 'role',
+        title: 'Role',
+        searchable: roleOptions.length > 8,
+        options: [{ value: '', label: 'All roles' }, ...roleOptions.map((role) => ({ value: role, label: role }))],
+    },
+    {
+        name: 'level',
+        title: 'Level',
+        options: [{ value: '', label: 'All levels' }, ...levels],
+    },
+    {
+        name: 'tag',
+        title: 'Skill',
+        searchable: true,
+        options: [
+            { value: '', label: 'All skills' },
+            ...tags.map(({ tag, count }) => ({ value: tag, label: tag, meta: String(count) })),
+        ],
+    },
+    {
+        name: 'location',
+        title: 'Country',
+        align: 'end',
+        searchable: locations.length > 8,
+        options: [{ value: '', label: 'Anywhere' }, ...locations.map((location) => ({ value: location, label: location }))],
+    },
+]
+---
+
+<form data-filters hidden class="grid gap-3 rounded-2xl border border-border bg-muted p-4 sm:grid-cols-2 lg:grid-cols-6">
+    <label class="flex flex-col gap-1.5 sm:col-span-2">
+        <span class={label}>Search</span>
+        <input
+            type="search"
+            name="q"
+            placeholder="Name, role or skill"
+            autocomplete="off"
+            class="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-card-foreground"
+        />
+    </label>
+    {
+        selects.map((select) => (
+            <div class="flex flex-col gap-1.5">
+                <span id={`filter-${select.name}-label`} class={label}>
+                    {select.title}
+                </span>
+                <Select
+                    id={`filter-${select.name}`}
+                    name={select.name}
+                    options={select.options}
+                    searchable={select.searchable}
+                    align={select.align}
+                    labelledby={`filter-${select.name}-label filter-${select.name}`}
+                    size="sm"
+                />
+            </div>
+        ))
+    }
+    <div class="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-6">
+        <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" name="open" value="1" class="size-4 accent-primary" />
+            Open to work only
+        </label>
+        <div class="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <span id="filter-sort-label">Order</span>
+            <div class="w-40">
+                <Select
+                    id="filter-sort"
+                    name="sort"
+                    options={[
+                        { value: '', label: 'Shuffled' },
+                        { value: 'name', label: 'Name, A to Z' },
+                    ]}
+                    labelledby="filter-sort-label filter-sort"
+                    size="sm"
+                    align="end"
+                />
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    const form = document.querySelector('[data-filters]')
+    const grid = document.querySelector('[data-grid]')
+    const count = document.querySelector('[data-count]')
+    const empty = document.querySelector('[data-empty]')
+    const more = document.querySelector('[data-more]')
+    const items = [...grid.children]
+    const shuffled = [...items]
+        .map((item) => ({ item, key: Math.random() }))
+        .sort((a, b) => a.key - b.key)
+        .map(({ item }) => item)
+    const pageSize = 48
+    let limit = pageSize
+
+    const matches = (data, filters) =>
+        (!filters.q || data.search.includes(filters.q.trim().toLowerCase())) &&
+        (!filters.role || data.role === filters.role) &&
+        (!filters.level || data.level === filters.level) &&
+        (!filters.tag || data.tags.split(' ').includes(filters.tag)) &&
+        (!filters.location || data.location === filters.location) &&
+        (!filters.open || data.open === 'true')
+
+    const syncUrl = (filters) => {
+        const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value))
+        const query = params.toString()
+        history.replaceState(null, '', query ? `?${query}` : location.pathname)
+    }
+
+    const render = () => {
+        const filters = Object.fromEntries(new FormData(form))
+        const visible = (filters.sort === 'name' ? items : shuffled).filter((item) =>
+            matches(item.firstElementChild.dataset, filters),
+        )
+        items.forEach((item) => (item.hidden = true))
+        visible.forEach((item, index) => {
+            item.hidden = index >= limit
+            grid.append(item)
+        })
+        count.textContent = `${visible.length} of ${items.length} developers`
+        empty.hidden = visible.length > 0
+        more.hidden = visible.length <= limit
+        syncUrl(filters)
+    }
+
+    new URLSearchParams(location.search).forEach((value, key) => {
+        const input = form.elements.namedItem(key)
+        if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = true
+        else if (input) input.value = value
+    })
+
+    form.hidden = false
+    form.addEventListener('submit', (event) => event.preventDefault())
+    form.addEventListener('input', () => {
+        limit = pageSize
+        render()
+    })
+    more.addEventListener('click', () => {
+        limit += pageSize
+        render()
+    })
+    render()
+</script>

@@ -1,0 +1,9 @@
+node_modules
+dist
+.astro
+trash
+.env
+.env.*
+!.env.example
+CLAUDE.md
+.agents

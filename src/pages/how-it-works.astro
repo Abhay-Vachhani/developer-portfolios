@@ -1,0 +1,283 @@
+---
+import Base from '@/layouts/base.astro'
+import { toMarkdown } from '@/lib/frontmatter.js'
+import { absolute, href } from '@/lib/href.js'
+import { links } from '@/lib/links.js'
+import { levels } from '@/lib/options.js'
+import { limits } from '@/lib/schema.js'
+import { removalUrl, repoUrl } from '@/lib/site.js'
+
+const steps = [
+    {
+        title: 'Fill in the builder',
+        text: 'Enter your GitHub username, a short bio, your role, level and skills. The live preview shows your card exactly as it will look, and the file is written for you.',
+    },
+    {
+        title: 'GitHub opens with your file ready',
+        text: 'Click "Open pull request on GitHub". GitHub creates a copy of the project in your account automatically, so you never fork or clone anything yourself. Click "Propose changes".',
+    },
+    {
+        title: 'Open the pull request',
+        text: 'GitHub shows the "Open a pull request" page. Click "Create pull request". That is the last click.',
+    },
+    {
+        title: 'A bot checks your file',
+        text: 'Within a minute a bot checks that it is your own file, that your account is at least 30 days old, and that every field is valid. If something is off, it comments with exactly what to fix.',
+    },
+    {
+        title: 'You are live',
+        text: 'When the checks pass, the pull request is merged automatically and the site rebuilds. Your profile page is online a few minutes later.',
+    },
+]
+
+const example = toMarkdown({
+    name: 'Ada Lovelace',
+    role: 'Full Stack Developer',
+    bio: 'I build web apps and I am learning Rust.',
+    level: 'junior',
+    tags: ['react', 'node', 'rust'],
+    open_to_work: true,
+    location: 'United Kingdom',
+    linkedin: 'ada-lovelace',
+    portfolio: 'https://ada.dev',
+})
+
+const fields = [
+    { key: 'name', required: true, rule: `${limits.name.min} to ${limits.name.max} characters` },
+    { key: 'role', required: true, rule: `${limits.role.min} to ${limits.role.max} characters, like Backend Developer` },
+    { key: 'bio', required: true, rule: `${limits.bio.min} to ${limits.bio.max} characters, one line, no links` },
+    { key: 'level', required: true, rule: levels.map((level) => level.value).join(', ') },
+    { key: 'tags', required: true, rule: `${limits.tags.min} to ${limits.tags.max} skills, like [react, node]` },
+    { key: 'open_to_work', required: true, rule: 'true or false' },
+    { key: 'location', required: false, rule: 'Country name in English, like India' },
+    ...links.map((link) => ({
+        key: link.key,
+        required: false,
+        rule: link.kind === 'url' ? 'Full https:// link' : `Your ${link.label} username only`,
+    })),
+]
+
+const rules = [
+    'One file per person, named after your GitHub username in lowercase.',
+    'You can only add, edit or delete your own file.',
+    'GitHub accounts must be at least 30 days old.',
+    'Only the listed fields, and nothing below the closing ---.',
+]
+
+const faqs = [
+    {
+        question: 'Do I need a portfolio website?',
+        answer: 'No. A portfolio link is optional. Without one, your card links to your GitHub profile.',
+    },
+    {
+        question: 'Is it free?',
+        answer: 'Yes. The directory is open source and free for everyone, and it always will be.',
+    },
+    {
+        question: 'How do I update my profile?',
+        answer: 'Open your profile page and click "Edit profile". The builder loads your current details, and GitHub opens your file so you can paste the new version.',
+    },
+    {
+        question: 'How do I remove my profile?',
+        answer: 'Click "Remove my profile" on your profile page and confirm the pull request. If you lost access to your GitHub account, open a removal request instead.',
+    },
+    {
+        question: 'Why do links only take a username?',
+        answer: 'Storing only usernames means a profile can never send visitors to a fake or harmful website. Your portfolio and blog are the only full links, and they must use https.',
+    },
+    {
+        question: 'Why must my account be 30 days old?',
+        answer: 'It keeps spam accounts out without adding any other hurdle for real developers.',
+    },
+    {
+        question: 'Can I edit the file by hand?',
+        answer: 'Yes. Create portfolios/your-username.md with the fields below. The same bot checks it either way.',
+    },
+]
+
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    url: absolute('how-it-works/', Astro.site),
+    mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
+}
+
+const eyebrow = 'font-mono text-xs tracking-widest text-muted-foreground uppercase'
+const heading = 'text-3xl font-semibold tracking-tight'
+---
+
+<Base
+    title="How it works"
+    description="How to add your developer profile in two minutes: fill in the builder, open a pull request on GitHub, and a bot checks and publishes it. Fields, rules and answers to common questions."
+    path="how-it-works/"
+    jsonLd={jsonLd}
+>
+    <div class="mx-auto flex max-w-4xl flex-col gap-20 px-4 pt-12 sm:pt-20">
+        <header class="flex flex-col gap-4">
+            <p class={eyebrow}>How it works</p>
+            <h1 class="text-5xl leading-tight font-semibold tracking-tight sm:text-6xl">
+                From a form to your own profile page in <span class="text-primary">five steps.</span>
+            </h1>
+            <p class="max-w-2xl text-lg text-muted-foreground">
+                Every developer in the directory is one small file in a public GitHub repository. You never need to know
+                git: the builder writes the file and GitHub does the rest.
+            </p>
+            <div class="flex flex-wrap gap-3 pt-2">
+                <a
+                    href={href('add/')}
+                    class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
+                >
+                    Add your profile
+                </a>
+                <a
+                    href={repoUrl}
+                    class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
+                >
+                    View the repository
+                </a>
+            </div>
+        </header>
+
+        <section aria-labelledby="steps-title" class="flex flex-col gap-8">
+            <div class="flex flex-col gap-2">
+                <p class={eyebrow}>About two minutes</p>
+                <h2 id="steps-title" class={heading}>The steps</h2>
+            </div>
+            <ol class="relative flex flex-col gap-4">
+                {
+                    steps.map((step, index) => (
+                        <li class="relative flex gap-5">
+                            <div class="flex flex-col items-center">
+                                <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary font-mono text-sm font-bold text-primary-foreground">
+                                    {index + 1}
+                                </span>
+                                {index < steps.length - 1 && <span class="mt-2 w-px flex-1 bg-border" aria-hidden="true" />}
+                            </div>
+                            <div class="flex flex-1 flex-col gap-1.5 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
+                                <h3 class="text-lg font-semibold">{step.title}</h3>
+                                <p class="leading-relaxed text-muted-foreground">{step.text}</p>
+                            </div>
+                        </li>
+                    ))
+                }
+            </ol>
+        </section>
+
+        <section aria-labelledby="file-title" class="grid gap-8 lg:grid-cols-2 lg:items-start">
+            <div class="flex flex-col gap-4">
+                <p class={eyebrow}>Under the hood</p>
+                <h2 id="file-title" class={heading}>Your profile is one file</h2>
+                <p class="leading-relaxed text-muted-foreground">
+                    The builder creates a file called <code class="rounded-md bg-secondary px-1.5 py-0.5 font-mono text-sm text-secondary-foreground">portfolios/your-username.md</code>
+                    with a few lines of details. Your GitHub link and photo are added automatically from the file name.
+                </p>
+                <ul class="flex flex-col gap-2">
+                    {
+                        rules.map((rule) => (
+                            <li class="flex gap-3 leading-relaxed">
+                                <svg aria-hidden="true" viewBox="0 0 20 20" class="mt-1 size-4 shrink-0 text-primary">
+                                    <path
+                                        d="M4.5 10.5l3.5 3.5 7.5-8"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                {rule}
+                            </li>
+                        ))
+                    }
+                </ul>
+            </div>
+            <figure class="flex flex-col gap-2">
+                <figcaption class={eyebrow}>portfolios/ada-lovelace.md</figcaption>
+                <pre
+                    class="overflow-x-auto rounded-xl border border-border bg-card p-5 font-mono text-sm leading-relaxed text-card-foreground shadow-sm">{example}</pre>
+            </figure>
+        </section>
+
+        <section aria-labelledby="fields-title" class="flex flex-col gap-6">
+            <div class="flex flex-col gap-2">
+                <p class={eyebrow}>Reference</p>
+                <h2 id="fields-title" class={heading}>Fields</h2>
+                <p class="text-muted-foreground">
+                    Skills are cleaned up for you: React.js becomes react and C++ becomes cpp. Pick an existing skill when
+                    one fits, so people can find you.
+                </p>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-border bg-card text-card-foreground">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-border bg-muted">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">Field</th>
+                            <th scope="col" class="px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">Required</th>
+                            <th scope="col" class="px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">What to write</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            fields.map((field) => (
+                                <tr class="border-b border-border last:border-0">
+                                    <td class="px-4 py-3 font-mono whitespace-nowrap">{field.key}</td>
+                                    <td class:list={['px-4 py-3', field.required ? 'font-medium' : 'text-muted-foreground']}>
+                                        {field.required ? 'Yes' : 'No'}
+                                    </td>
+                                    <td class="px-4 py-3 text-muted-foreground">{field.rule}</td>
+                                </tr>
+                            ))
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section aria-labelledby="faq-title" class="flex flex-col gap-6">
+            <div class="flex flex-col gap-2">
+                <p class={eyebrow}>Questions</p>
+                <h2 id="faq-title" class={heading}>Frequently asked</h2>
+            </div>
+            <div class="flex flex-col gap-3">
+                {
+                    faqs.map((faq) => (
+                        <details class="group rounded-xl border border-border bg-card text-card-foreground open:shadow-sm">
+                            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-medium">
+                                {faq.question}
+                                <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 20 20"
+                                    class="size-4 shrink-0 text-muted-foreground transition group-open:rotate-180"
+                                >
+                                    <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                                </svg>
+                            </summary>
+                            <p class="px-5 pb-5 leading-relaxed text-muted-foreground">{faq.answer}</p>
+                        </details>
+                    ))
+                }
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Lost access to your account? Open a <a href={removalUrl} class="underline underline-offset-4">removal request</a>.
+                Curious about your data? Read the <a href={href('privacy/')} class="underline underline-offset-4">privacy page</a>.
+            </p>
+        </section>
+
+        <section class="flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-8 text-card-foreground shadow-sm sm:p-10">
+            <h2 class={heading}>Ready to be found?</h2>
+            <p class="max-w-xl text-muted-foreground">
+                It takes about two minutes. Students and first-timers are more than welcome.
+            </p>
+            <a
+                href={href('add/')}
+                class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
+            >
+                Add your profile
+            </a>
+        </section>
+    </div>
+</Base>

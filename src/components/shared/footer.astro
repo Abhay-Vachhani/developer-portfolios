@@ -1,0 +1,18 @@
+---
+import Logo from '@/components/shared/logo.astro'
+import { href } from '@/lib/href.js'
+import { repoUrl } from '@/lib/site.js'
+---
+
+<footer class="mt-20 border-t border-border">
+    <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-end sm:justify-between">
+        <Logo tagline />
+        <nav aria-label="Footer" class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <a href={href('add/')} class="hover:text-foreground">Add your profile</a>
+            <a href={href('tags/')} class="hover:text-foreground">Browse skills</a>
+            <a href={repoUrl} class="hover:text-foreground">Source on GitHub</a>
+            <a href={href('how-it-works/')} class="hover:text-foreground">How it works</a>
+            <a href={href('privacy/')} class="hover:text-foreground">Privacy</a>
+        </nav>
+    </div>
+</footer>

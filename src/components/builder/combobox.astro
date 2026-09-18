@@ -1,0 +1,149 @@
+---
+const { id, name, options, placeholder, maxlength, describedby, class: className, empty = 'Press Enter to use' } = Astro.props
+const listId = `${id}-options`
+---
+
+<div data-combobox data-empty-text={empty} class="relative w-full">
+    <input
+        id={id}
+        name={name}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls={listId}
+        aria-describedby={describedby}
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        maxlength={maxlength}
+        placeholder={placeholder}
+        class:list={[className, 'pr-10']}
+    />
+    <svg
+        aria-hidden="true"
+        viewBox="0 0 20 20"
+        class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+    >
+        <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path>
+    </svg>
+    <div
+        data-panel
+        hidden
+        class="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-md"
+    >
+        <ul id={listId} role="listbox" class="max-h-72 overflow-y-auto overscroll-contain p-1.5">
+            {
+                options.map((option, index) => (
+                    <li
+                        id={`${listId}-${index}`}
+                        role="option"
+                        aria-selected="false"
+                        data-value={option.value}
+                        class="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
+                    >
+                        <span data-label>{option.value}</span>
+                        {option.meta && <span class="shrink-0 font-mono text-xs text-muted-foreground">{option.meta}</span>}
+                    </li>
+                ))
+            }
+        </ul>
+        <p data-none hidden class="border-t border-border px-4 py-2.5 text-sm text-muted-foreground"></p>
+    </div>
+</div>
+
+<script>
+    import { highlight, sortMatches } from '@/lib/search.js'
+
+    document.querySelectorAll('[data-combobox]').forEach((root) => {
+        const input = root.querySelector('[role="combobox"]')
+        const panel = root.querySelector('[data-panel]')
+        const list = root.querySelector('[role="listbox"]')
+        const none = root.querySelector('[data-none]')
+        const options = [...list.children]
+        let visible = []
+        let active = -1
+
+        const setActive = (index) => {
+            options.forEach((option) => option.setAttribute('aria-selected', 'false'))
+            active = index
+            const option = visible[index]
+            if (!option) {
+                input.removeAttribute('aria-activedescendant')
+                return
+            }
+            option.setAttribute('aria-selected', 'true')
+            input.setAttribute('aria-activedescendant', option.id)
+            option.scrollIntoView({ block: 'nearest' })
+        }
+
+        const close = () => {
+            panel.hidden = true
+            input.setAttribute('aria-expanded', 'false')
+            setActive(-1)
+        }
+
+        const open = () => {
+            const query = input.value.trim().toLowerCase()
+            const hidden = new Set((root.dataset.exclude ?? '').split(' ').filter(Boolean))
+            visible = sortMatches(
+                options.filter((option) => !hidden.has(option.dataset.value)),
+                query,
+                (option) => option.dataset.value,
+            )
+            options.forEach((option) => (option.hidden = true))
+            visible.forEach((option) => {
+                option.hidden = false
+                list.append(option)
+                highlight(option.querySelector('[data-label]'), option.dataset.value, query)
+            })
+            const exact = visible.some((option) => option.dataset.value.toLowerCase() === query)
+            none.hidden = !query || exact
+            none.textContent = `${root.dataset.emptyText} "${input.value.trim()}"`
+            list.hidden = visible.length === 0
+            panel.hidden = visible.length === 0 && none.hidden
+            input.setAttribute('aria-expanded', String(!panel.hidden))
+            setActive(query && visible.length ? 0 : -1)
+        }
+
+        const choose = (option) => {
+            input.value = option.dataset.value
+            close()
+            input.dispatchEvent(new Event('input', { bubbles: true }))
+            root.dispatchEvent(new CustomEvent('combobox:select', { bubbles: true, detail: option.dataset.value }))
+        }
+
+        input.addEventListener('focus', open)
+        input.addEventListener('input', (event) => {
+            if (event.isTrusted) open()
+        })
+        input.addEventListener('blur', close)
+        input.addEventListener(
+            'keydown',
+            (event) => {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    if (panel.hidden) open()
+                    const step = event.key === 'ArrowDown' ? 1 : -1
+                    setActive((active + step + visible.length) % Math.max(visible.length, 1))
+                } else if (event.key === 'Enter' && !panel.hidden && visible[active]) {
+                    event.preventDefault()
+                    event.stopImmediatePropagation()
+                    choose(visible[active])
+                } else if (event.key === 'Escape' && !panel.hidden) {
+                    event.preventDefault()
+                    close()
+                }
+            },
+            { capture: true },
+        )
+        list.addEventListener('pointerdown', (event) => event.preventDefault())
+        list.addEventListener('click', (event) => {
+            const option = event.target.closest('[role="option"]')
+            if (option) choose(option)
+        })
+        list.addEventListener('pointermove', (event) => {
+            const option = event.target.closest('[role="option"]')
+            if (option) setActive(visible.indexOf(option))
+        })
+    })
+</script>

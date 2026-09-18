@@ -1,0 +1,72 @@
+---
+import { Font } from 'astro:assets'
+import '@/styles/globals.css'
+import Footer from '@/components/shared/footer.astro'
+import Header from '@/components/shared/header.astro'
+import { absolute, href } from '@/lib/href.js'
+import { googleVerification, site } from '@/lib/site.js'
+
+const {
+    title,
+    description = site.description,
+    path = '',
+    image = absolute('og.png', Astro.site),
+    imageAlt = site.name,
+    type = 'website',
+    jsonLd,
+    noindex = false,
+} = Astro.props
+
+const fullTitle = title ? `${title} | ${site.name}` : site.title
+const canonical = absolute(path, Astro.site)
+const structured = [jsonLd].flat().filter(Boolean)
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+        <title>{fullTitle}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonical} />
+        {noindex && <meta name="robots" content="noindex, follow" />}
+
+        <meta property="og:type" content={type} />
+        <meta property="og:site_name" content={site.name} />
+        <meta property="og:title" content={fullTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:image" content={image} />
+        <meta property="og:image:alt" content={imageAlt} />
+        <meta property="og:locale" content="en_US" />
+        <meta name="twitter:card" content={type === 'profile' ? 'summary' : 'summary_large_image'} />
+        <meta name="twitter:title" content={fullTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={image} />
+
+        <link rel="icon" type="image/svg+xml" href={href('favicon.svg')} />
+        <link rel="sitemap" href={href('sitemap.xml')} />
+        <meta name="generator" content={Astro.generator} />
+        <meta name="google-site-verification" content={googleVerification} />
+
+        <Font cssVariable="--font-poppins" preload />
+        <Font cssVariable="--font-space-mono" />
+
+        {structured.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+    </head>
+    <body class="flex min-h-dvh flex-col">
+        <a
+            href="#main"
+            class="sr-only rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50"
+        >
+            Skip to content
+        </a>
+        <Header />
+        <main id="main" class="flex-1">
+            <slot />
+        </main>
+        <Footer />
+    </body>
+</html>

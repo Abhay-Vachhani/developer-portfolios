@@ -1,0 +1,21 @@
+name: Removal request
+description: Ask for a profile to be removed when you cannot open a pull request yourself.
+labels: [removal]
+body:
+    - type: markdown
+      attributes:
+          value: If you still have access to your GitHub account, the fastest way is the "Remove my profile" link on your profile page.
+    - type: input
+      id: profile
+      attributes:
+          label: Profile
+          description: The GitHub username of the profile, like @octocat
+      validations:
+          required: true
+    - type: textarea
+      id: reason
+      attributes:
+          label: Why you cannot remove it yourself
+          description: For example, you lost access to the account. Do not share private details here, this issue is public.
+      validations:
+          required: true

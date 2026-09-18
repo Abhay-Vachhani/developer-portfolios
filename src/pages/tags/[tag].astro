@@ -1,0 +1,69 @@
+---
+import DeveloperCard from '@/components/shared/developer-card.astro'
+import Base from '@/layouts/base.astro'
+import { absolute, href } from '@/lib/href.js'
+import { countTags, getProfiles, indexableTag } from '@/lib/profiles.js'
+
+export const getStaticPaths = async () => {
+    const profiles = await getProfiles()
+    return countTags(profiles).map(({ tag }) => ({
+        params: { tag },
+        props: { tag, profiles: profiles.filter((profile) => profile.tags.includes(tag)) },
+    }))
+}
+
+const { tag, profiles } = Astro.props
+const path = `tags/${tag}/`
+const openCount = profiles.filter((profile) => profile.open_to_work).length
+const noun = profiles.length === 1 ? 'developer' : 'developers'
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${tag} developers`,
+    url: absolute(path, Astro.site),
+    mainEntity: {
+        '@type': 'ItemList',
+        numberOfItems: profiles.length,
+        itemListElement: profiles.map((profile, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            url: absolute(`@${profile.username}/`, Astro.site),
+            name: profile.name,
+        })),
+    },
+}
+---
+
+<Base
+    title={`${tag} developers`}
+    description={`${profiles.length} ${noun} who work with ${tag}, ${openCount} open to work. See their portfolios, GitHub and skills.`}
+    path={path}
+    jsonLd={jsonLd}
+    noindex={!indexableTag(profiles.length)}
+>
+    <section class="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-12 sm:pt-20">
+        <div class="flex flex-col gap-3">
+            <nav aria-label="Breadcrumb" class="font-mono text-xs text-muted-foreground">
+                <a href={href('tags/')} class="hover:text-foreground">Skills</a>
+                <span aria-hidden="true"> / </span>
+                <span aria-current="page">{tag}</span>
+            </nav>
+            <h1 class="font-semibold text-5xl tracking-tight">
+                <span class="font-mono text-4xl">{tag}</span> developers
+            </h1>
+            <p class="text-lg text-muted-foreground">
+                {profiles.length}
+                {noun}, {openCount} open to work.
+            </p>
+        </div>
+        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {
+                profiles.map((profile) => (
+                    <li class="grid">
+                        <DeveloperCard profile={profile} heading="h2" />
+                    </li>
+                ))
+            }
+        </ul>
+    </section>
+</Base>

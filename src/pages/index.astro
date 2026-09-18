@@ -1,0 +1,133 @@
+---
+import Filters from '@/components/directory/filters.astro'
+import DeveloperCard from '@/components/shared/developer-card.astro'
+import Base from '@/layouts/base.astro'
+import { absolute, href } from '@/lib/href.js'
+import { countTags, getProfiles } from '@/lib/profiles.js'
+import { site } from '@/lib/site.js'
+
+const profiles = await getProfiles()
+const tags = countTags(profiles)
+const openCount = profiles.filter((profile) => profile.open_to_work).length
+
+const jsonLd = [
+    {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: site.name,
+        url: absolute('', Astro.site),
+        description: site.description,
+    },
+    {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: site.title,
+        url: absolute('', Astro.site),
+        about: 'Software developers and their portfolios',
+        isPartOf: { '@type': 'WebSite', name: site.name, url: absolute('', Astro.site) },
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: profiles.length,
+            itemListElement: profiles.map((profile, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                url: absolute(`@${profile.username}/`, Astro.site),
+                name: profile.name,
+            })),
+        },
+    },
+]
+---
+
+<Base jsonLd={jsonLd}>
+    <section class="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-16 pb-10 sm:pt-24">
+        <p class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Open source directory</p>
+        <h1 class="max-w-3xl font-semibold text-5xl leading-tight tracking-tight sm:text-7xl">
+            Every developer deserves to be <em class="text-primary not-italic">found.</em>
+        </h1>
+        <p class="max-w-2xl text-lg text-muted-foreground">
+            A free, community-built directory of developers. Students, juniors and seniors alike. No portfolio site
+            needed, just a GitHub account and one small file.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+            <a
+                href={href('add/')}
+                class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
+            >
+                Add your profile
+            </a>
+            <a
+                href={href('how-it-works/')}
+                class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
+            >
+                How it works
+            </a>
+        </div>
+        <dl class="mt-4 flex flex-wrap gap-x-10 gap-y-3">
+            <div>
+                <dt class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Developers</dt>
+                <dd class="font-semibold text-4xl">{profiles.length}</dd>
+            </div>
+            <div>
+                <dt class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Skills</dt>
+                <dd class="font-semibold text-4xl">{tags.length}</dd>
+            </div>
+            <div>
+                <dt class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Open to work</dt>
+                <dd class="font-semibold text-4xl">{openCount}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section aria-labelledby="directory-title" class="mx-auto flex max-w-6xl flex-col gap-6 px-4">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+            <h2 id="directory-title" class="font-semibold text-3xl tracking-tight">The directory</h2>
+            <p data-count aria-live="polite" class="font-mono text-xs text-muted-foreground">
+                {profiles.length} developers
+            </p>
+        </div>
+
+        {profiles.length > 0 && <Filters profiles={profiles} tags={tags} />}
+
+        <ul data-grid class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {
+                profiles.map((profile) => (
+                    <li class="grid">
+                        <DeveloperCard profile={profile} />
+                    </li>
+                ))
+            }
+        </ul>
+
+        <div
+            data-empty
+            hidden={profiles.length > 0}
+            class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground"
+        >
+            {
+                profiles.length > 0 ? (
+                    <p>No developers match these filters yet.</p>
+                ) : (
+                    <>
+                        <p>No developers yet. Be the first one in the directory.</p>
+                        <a
+                            href={href('add/')}
+                            class="rounded-xl border border-border bg-card px-5 py-2.5 font-medium text-card-foreground hover:bg-accent"
+                        >
+                            Add your profile
+                        </a>
+                    </>
+                )
+            }
+        </div>
+
+        <button
+            type="button"
+            data-more
+            hidden
+            class="mx-auto rounded-xl border border-border bg-card px-5 py-2.5 font-medium text-card-foreground hover:bg-accent"
+        >
+            Show more
+        </button>
+    </section>
+</Base>

@@ -1,0 +1,25 @@
+---
+import Form from '@/components/builder/form.astro'
+import Base from '@/layouts/base.astro'
+import { countTags, getProfiles } from '@/lib/profiles.js'
+
+const tags = countTags(await getProfiles())
+---
+
+<Base
+    title="Add your developer profile"
+    description="Add yourself to the developer directory in two minutes. Fill in a short form, and it opens a ready-made pull request on GitHub. Free, and no portfolio site needed."
+    path="add/"
+>
+    <section class="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-12 sm:pt-20">
+        <div class="flex max-w-3xl flex-col gap-3">
+            <p class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Takes about two minutes</p>
+            <h1 class="font-semibold text-5xl tracking-tight">Add your profile</h1>
+            <p class="text-lg text-muted-foreground">
+                Fill in the form and we build your file. GitHub then opens with it ready to commit. Once the automatic
+                checks pass, you are in the directory within minutes.
+            </p>
+        </div>
+        <Form tags={tags} />
+    </section>
+</Base>

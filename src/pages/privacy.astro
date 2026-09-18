@@ -1,0 +1,109 @@
+---
+import Base from '@/layouts/base.astro'
+import { href } from '@/lib/href.js'
+import { removalUrl, repoUrl, site } from '@/lib/site.js'
+
+const updated = '18 September 2026'
+const sections = [
+    {
+        title: 'The short version',
+        items: [
+            'You decide what is in your profile, and you can change or delete it at any time.',
+            'Everything in your profile is public: on this site, on GitHub and in search engines.',
+            'We do not use cookies, analytics, ads or tracking of any kind.',
+            'We never ask for your email, phone number or address.',
+        ],
+    },
+    {
+        title: 'What a profile contains',
+        items: [
+            'Only the fields you write in your file: name, role, bio, level, skills, open to work, and optionally your country and links.',
+            'Your GitHub username, which is the file name, and your public GitHub avatar, which is loaded from GitHub.',
+            'Links are stored as usernames, so a profile cannot point visitors to unknown websites except your own portfolio and blog.',
+        ],
+    },
+    {
+        title: 'Why we show it',
+        items: [
+            'You add yourself by opening a pull request, which is your consent to be listed.',
+            'You can withdraw that consent at any time by deleting your file. Nothing else is needed.',
+        ],
+    },
+    {
+        title: 'Services involved',
+        items: [
+            'GitHub hosts the code, the profile files and this website (GitHub Pages). GitHub may log visitor IP addresses as described in its own privacy statement.',
+            'Avatars are loaded from github.com, so your browser connects to GitHub when you view profiles.',
+            'The profile builder checks your username with the public GitHub API directly from your browser. We do not receive or store anything you type into the builder.',
+            'Fonts are served from this site, not from a third party.',
+            'Google Search Console shows us how the site appears in Google search. It works from search data and adds nothing that runs in your browser.',
+        ],
+    },
+    {
+        title: 'Changing or removing your profile',
+        items: [
+            'To change it, use "Edit profile" on your profile page, or edit your file on GitHub.',
+            'To remove it, use "Remove my profile" on your profile page. It opens GitHub ready to delete your file.',
+            'If you lost access to your GitHub account, open a removal request and a maintainer will remove it for you.',
+        ],
+    },
+    {
+        title: 'What we cannot remove',
+        items: [
+            'Git keeps a history of every change, so an old version of your file stays in the repository history after you delete it.',
+            'Forks and copies made by other people, and pages cached by search engines, are outside our control. Search engines usually drop removed pages within a few weeks.',
+            'If you need something removed from the history, for example private information added by mistake, open a removal request and we will do our best to help.',
+        ],
+    },
+    {
+        title: 'Keeping the directory safe',
+        items: [
+            'Every change is checked automatically: you can only add or edit the file with your own GitHub username, and new accounts must be at least 30 days old.',
+            'Links are not allowed in bios, and every profile has a "Report" link for spam, abuse or impersonation.',
+        ],
+    },
+]
+---
+
+<Base
+    title="Privacy and your data"
+    description="What a developer profile contains, who can see it, which services are involved, and how to change or remove your profile at any time."
+    path="privacy/"
+>
+    <article class="mx-auto flex max-w-3xl flex-col gap-10 px-4 pt-12 sm:pt-20">
+        <header class="flex flex-col gap-3">
+            <p class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Last updated {updated}</p>
+            <h1 class="text-5xl font-semibold tracking-tight">Privacy and your data</h1>
+            <p class="text-lg text-muted-foreground">
+                {site.name} is an open source project. This page explains, in plain words, what happens with the details
+                you add.
+            </p>
+        </header>
+
+        {
+            sections.map((section) => (
+                <section class="flex flex-col gap-3">
+                    <h2 class="text-2xl font-semibold tracking-tight">{section.title}</h2>
+                    <ul class="flex list-disc flex-col gap-2 pl-5 leading-relaxed marker:text-muted-foreground">
+                        {section.items.map((item) => (
+                            <li>{item}</li>
+                        ))}
+                    </ul>
+                </section>
+            ))
+        }
+
+        <section class="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 text-card-foreground">
+            <h2 class="text-2xl font-semibold tracking-tight">Questions or requests</h2>
+            <p class="leading-relaxed">
+                Open a <a href={removalUrl} class="font-medium text-primary underline underline-offset-4">removal request</a>
+                or ask on <a href={repoUrl} class="font-medium text-primary underline underline-offset-4">GitHub</a>. Please
+                do not post private details in public issues. Changes to this page are visible in the repository history.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                The source code is released under the MIT license. Profile files are not: each one belongs to the person
+                it describes. <a href={href('add/')} class="underline underline-offset-4">Add your profile</a>.
+            </p>
+        </section>
+    </article>
+</Base>

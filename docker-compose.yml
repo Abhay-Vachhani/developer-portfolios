@@ -1,0 +1,17 @@
+name: developer-portfolios
+
+services:
+    app:
+        build: .
+        ports:
+            - '4321:4321'
+        volumes:
+            - .:/app
+            - node_modules:/app/node_modules
+        environment:
+            ASTRO_TELEMETRY_DISABLED: 1
+            SITE_URL: http://localhost:4321
+            PUBLIC_REPOSITORY: Abhay-Vachhani/developer-portfolios
+
+volumes:
+    node_modules:

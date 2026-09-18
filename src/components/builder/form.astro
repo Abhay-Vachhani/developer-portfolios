@@ -1,0 +1,577 @@
+---
+import Combobox from '@/components/builder/combobox.astro'
+import DeveloperCard from '@/components/shared/developer-card.astro'
+import Select from '@/components/shared/select.astro'
+import { countries } from '@/lib/countries.js'
+import { href } from '@/lib/href.js'
+import { links } from '@/lib/links.js'
+import { levels, roles } from '@/lib/options.js'
+import { limits } from '@/lib/schema.js'
+import { starterTags } from '@/lib/tags.js'
+
+const { tags } = Astro.props
+const used = new Set(tags.map(({ tag }) => tag))
+const suggestions = [
+    ...tags.map(({ tag, count }) => ({ value: tag, meta: `${count} ${count === 1 ? 'dev' : 'devs'}` })),
+    ...starterTags.filter((tag) => !used.has(tag)).map((tag) => ({ value: tag, meta: 'popular' })),
+]
+const sample = {
+    username: 'octocat',
+    name: 'Your name',
+    role: 'Your role',
+    bio: 'A short line about you and what you build.',
+    level: 'student',
+    tags: ['your', 'skills'],
+    open_to_work: false,
+}
+
+const field =
+    'w-full rounded-xl border border-input bg-card px-3 py-2.5 text-card-foreground aria-[invalid=true]:border-destructive'
+const label = 'font-medium'
+const hint = 'text-sm text-muted-foreground'
+const error = 'text-sm text-destructive'
+const group = 'flex flex-col gap-2'
+const section = 'flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 text-card-foreground sm:p-6'
+const eyebrow = 'font-mono text-xs tracking-widest text-muted-foreground uppercase'
+---
+
+<div class="grid gap-8 lg:grid-cols-5">
+    <form data-builder novalidate class="flex flex-col gap-6 lg:col-span-3">
+        <fieldset class={section}>
+            <legend class="sr-only">GitHub account</legend>
+            <p class={eyebrow}>1. Your GitHub</p>
+            <div class={group}>
+                <label for="username" class={label}>GitHub username</label>
+                <input
+                    id="username"
+                    name="username"
+                    required
+                    autocomplete="username"
+                    autocapitalize="none"
+                    spellcheck="false"
+                    placeholder="octocat"
+                    aria-describedby="username-hint username-error"
+                    class={field}
+                />
+                <p id="username-hint" class={hint}>
+                    Use the account you will open the pull request with. Your GitHub link and photo are added
+                    automatically.
+                </p>
+                <p id="username-status" data-status aria-live="polite" class="text-sm"></p>
+                <p id="username-error" data-error="username" class={error}></p>
+            </div>
+        </fieldset>
+
+        <fieldset class={section}>
+            <legend class="sr-only">About you</legend>
+            <p class={eyebrow}>2. About you</p>
+            <div class={group}>
+                <label for="name" class={label}>Name</label>
+                <input
+                    id="name"
+                    name="name"
+                    required
+                    autocomplete="name"
+                    maxlength={limits.name.max}
+                    aria-describedby="name-error"
+                    class={field}
+                />
+                <p id="name-error" data-error="name" class={error}></p>
+            </div>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <div class={group}>
+                    <label for="role" class={label}>Role</label>
+                    <Combobox
+                        id="role"
+                        name="role"
+                        options={roles.map((role) => ({ value: role }))}
+                        maxlength={limits.role.max}
+                        placeholder="Search, like Frontend"
+                        describedby="role-hint role-error"
+                        empty="Not listed, we will use"
+                        class={field}
+                    />
+                    <p id="role-hint" class={hint}>Pick from the list, or type your own.</p>
+                    <p id="role-error" data-error="role" class={error}></p>
+                </div>
+                <div class={group}>
+                    <label for="level" class={label}>Level</label>
+                    <Select
+                        id="level"
+                        name="level"
+                        options={levels}
+                        placeholder="Choose a level"
+                        describedby="level-error"
+                    />
+                    <p id="level-error" data-error="level" class={error}></p>
+                </div>
+            </div>
+
+            <div class={group}>
+                <div class="flex items-baseline justify-between gap-2">
+                    <label for="bio" class={label}>Short bio</label>
+                    <span data-counter class="font-mono text-xs text-muted-foreground">0/{limits.bio.max}</span>
+                </div>
+                <textarea
+                    id="bio"
+                    name="bio"
+                    required
+                    rows="2"
+                    maxlength={limits.bio.max}
+                    placeholder="What you build, what you are learning, what you care about."
+                    aria-describedby="bio-hint bio-error"
+                    class={field}></textarea>
+                <p id="bio-hint" class={hint}>{limits.bio.min} to {limits.bio.max} characters, one line, no links.</p>
+                <p id="bio-error" data-error="bio" class={error}></p>
+            </div>
+
+            <div class={group}>
+                <label for="tag-input" class={label}>Skills</label>
+                <div data-tag-picker class="flex gap-2">
+                    <Combobox
+                        id="tag-input"
+                        options={suggestions}
+                        maxlength={limits.tag.max}
+                        placeholder="Search skills, like react"
+                        describedby="tags-hint tags-note tags-error"
+                        empty="Press Enter to add new skill"
+                        class={field}
+                    />
+                    <button
+                        type="button"
+                        data-add-tag
+                        class="shrink-0 rounded-xl border border-border bg-secondary px-4 font-medium text-secondary-foreground hover:bg-accent"
+                    >
+                        Add
+                    </button>
+                </div>
+                <ul data-tag-list aria-label="Your skills" class="flex flex-wrap gap-2"></ul>
+                <template data-chip>
+                    <li
+                        class="inline-flex items-center gap-1 rounded-md bg-secondary py-1 pr-1 pl-2.5 font-mono text-sm text-secondary-foreground"
+                    >
+                        <span data-chip-label></span>
+                        <button type="button" class="rounded-md px-1.5 leading-none hover:bg-accent" data-remove>
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </li>
+                </template>
+                <p id="tags-hint" class={hint}>
+                    Add {limits.tags.min} to {limits.tags.max}. Pick from the suggestions so people can find you.
+                </p>
+                <p id="tags-note" data-tag-note aria-live="polite" class={hint}></p>
+                <p id="tags-error" data-error="tags" class={error}></p>
+            </div>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <fieldset class={group} aria-describedby="open-error">
+                    <legend class:list={[label, 'mb-2']}>Open to work?</legend>
+                    <div class="flex gap-2">
+                        <label
+                            class="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-input px-3 py-2.5 has-checked:border-primary"
+                        >
+                            <input type="radio" name="open_to_work" value="true" class="accent-primary" /> Yes
+                        </label>
+                        <label
+                            class="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-input px-3 py-2.5 has-checked:border-primary"
+                        >
+                            <input type="radio" name="open_to_work" value="false" class="accent-primary" /> No
+                        </label>
+                    </div>
+                    <p id="open-error" data-error="open_to_work" class={error}></p>
+                </fieldset>
+                <div class={group}>
+                    <label for="location" class={label}>Country <span class={hint}>(optional)</span></label>
+                    <Select
+                        id="location"
+                        name="location"
+                        options={[
+                            { value: '', label: 'Prefer not to say' },
+                            ...countries.map((country) => ({ value: country, label: country })),
+                        ]}
+                        searchable
+                    />
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class={section}>
+            <legend class="sr-only">Links</legend>
+            <div class="flex flex-col gap-1">
+                <p class={eyebrow}>3. Links (optional)</p>
+                <p class={hint}>Paste a full link or just your username. We keep only the username.</p>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2">
+                {
+                    links.map((link) => (
+                        <div class={group}>
+                            <label for={`link-${link.key}`} class={label}>
+                                {link.label}
+                            </label>
+                            <input
+                                id={`link-${link.key}`}
+                                name={link.key}
+                                data-link={link.key}
+                                type={link.kind === 'url' ? 'url' : 'text'}
+                                inputmode={link.kind === 'url' ? 'url' : undefined}
+                                autocapitalize="none"
+                                spellcheck="false"
+                                placeholder={link.placeholder}
+                                aria-describedby={`${link.key}-error`}
+                                class={field}
+                            />
+                            <p id={`${link.key}-error`} data-error={link.key} class={error} />
+                        </div>
+                    ))
+                }
+            </div>
+        </fieldset>
+    </form>
+
+    <aside class="flex flex-col gap-4 lg:col-span-2" aria-label="Preview">
+        <div class="flex flex-col gap-4 lg:sticky lg:top-6">
+            <p class={eyebrow}>Live preview</p>
+            <div data-preview>
+                <DeveloperCard profile={sample} preview heading="h2" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <p class={eyebrow}>
+                    Your file <span data-filename class="normal-case">portfolios/your-username.md</span>
+                </p>
+                <pre
+                    data-output
+                    class="overflow-x-auto rounded-xl border border-border bg-muted p-4 font-mono text-xs leading-relaxed text-foreground"></pre>
+            </div>
+
+            <p data-mode class="rounded-xl border border-border bg-muted p-3 text-sm" hidden></p>
+
+            <div class="flex flex-col gap-2">
+                <button
+                    type="button"
+                    data-submit
+                    class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
+                >
+                    Open pull request on GitHub
+                </button>
+                <button
+                    type="button"
+                    data-copy
+                    class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
+                >
+                    Copy file
+                </button>
+                <p data-summary aria-live="polite" class="text-sm text-muted-foreground"></p>
+                <p class="rounded-xl border border-border bg-muted p-3 text-sm text-muted-foreground">
+                    Everything in this file becomes public on GitHub and this site. Only add what you are happy to share.
+                    Nothing you type here is sent to us.
+                    <a href={href('privacy/')} class="underline underline-offset-4">Privacy</a>
+                </p>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+    import { toMarkdown } from '@/lib/frontmatter.js'
+    import { avatarUrl, href } from '@/lib/href.js'
+    import { extractHandle, links } from '@/lib/links.js'
+    import { levelLabel, roles } from '@/lib/options.js'
+    import { formatIssues, limits, profileSchema, usernamePattern } from '@/lib/schema.js'
+    import { editFileUrl, newFileUrl } from '@/lib/site.js'
+    import { normalizeTag } from '@/lib/tags.js'
+
+    const form = document.querySelector('[data-builder]')
+    const preview = document.querySelector('[data-preview]')
+    const slot = (name) => preview.querySelector(`[data-slot="${name}"]`)
+    const output = document.querySelector('[data-output]')
+    const filename = document.querySelector('[data-filename]')
+    const status = document.querySelector('[data-status]')
+    const mode = document.querySelector('[data-mode]')
+    const submit = document.querySelector('[data-submit]')
+    const copy = document.querySelector('[data-copy]')
+    const summary = document.querySelector('[data-summary]')
+    const counter = document.querySelector('[data-counter]')
+    const tagInput = document.querySelector('#tag-input')
+    const tagList = document.querySelector('[data-tag-list]')
+    const tagNote = document.querySelector('[data-tag-note]')
+    const chip = document.querySelector('[data-chip]')
+    const known = new Set([...document.querySelectorAll('#tag-input-options [data-value]')].map((option) => option.dataset.value))
+    const tagPicker = document.querySelector('[data-tag-picker] [data-combobox]')
+    const validate = profileSchema.omit({ location: true })
+    const input = (name) => form.querySelector(`[name="${name}"]`)
+    const text = (name) => input(name)?.value.trim() ?? ''
+    const minAccountDays = 30
+
+    let tags = []
+    let touched = new Set()
+    let profiles = null
+    let existing = false
+
+    const loadProfiles = async () => {
+        if (profiles) return profiles
+        const response = await fetch(href('portfolios.json'))
+        profiles = new Map((await response.json()).map((profile) => [profile.username, profile]))
+        return profiles
+    }
+
+    const collect = () => {
+        const open = form.querySelector('[name="open_to_work"]:checked')?.value
+        const data = {
+            name: text('name'),
+            role: text('role'),
+            bio: text('bio'),
+            level: input('level').value || undefined,
+            tags,
+            open_to_work: open === undefined ? undefined : open === 'true',
+            location: input('location').value || undefined,
+        }
+        links.forEach((link) => {
+            const value = text(link.key)
+            data[link.key] = value ? (link.kind === 'url' ? value : extractHandle(link, value)) : undefined
+        })
+        return data
+    }
+
+    const usernameError = (username) => {
+        if (!username) return 'Enter your GitHub username'
+        if (!usernamePattern.test(username)) return 'This is not a valid GitHub username'
+        return ''
+    }
+
+    const showErrors = (errors) => {
+        form.querySelectorAll('[data-error]').forEach((element) => {
+            const key = element.dataset.error
+            const message = touched.has(key) ? (errors[key] ?? '') : ''
+            element.textContent = message
+            const named = key === 'tags' ? tagInput : input(key)
+            const control = named?.closest?.('[data-select]')?.querySelector('button') ?? named
+            if (control instanceof HTMLElement) control.setAttribute('aria-invalid', String(Boolean(message)))
+        })
+    }
+
+    const renderTags = () => {
+        tagPicker.dataset.exclude = tags.join(' ')
+        tagList.replaceChildren(
+            ...tags.map((tag) => {
+                const item = chip.content.firstElementChild.cloneNode(true)
+                item.querySelector('[data-chip-label]').textContent = tag
+                const remove = item.querySelector('[data-remove]')
+                remove.setAttribute('aria-label', `Remove ${tag}`)
+                remove.addEventListener('click', () => {
+                    tags = tags.filter((value) => value !== tag)
+                    touched.add('tags')
+                    renderTags()
+                    update()
+                })
+                return item
+            }),
+        )
+        const template = preview.querySelector('[data-slot="tag-template"]')
+        slot('tags').replaceChildren(
+            ...(tags.length ? tags : ['your', 'skills']).map((tag) => {
+                const element = template.content.firstElementChild.cloneNode(true)
+                element.textContent = tag
+                return element
+            }),
+        )
+    }
+
+    const addTag = () => {
+        const tag = normalizeTag(tagInput.value)
+        tagInput.value = ''
+        if (!tag) return
+        if (tags.includes(tag)) {
+            tagNote.textContent = `You already added ${tag}.`
+            return
+        }
+        if (tags.length >= limits.tags.max) {
+            tagNote.textContent = `You can add up to ${limits.tags.max} skills.`
+            return
+        }
+        tags = [...tags, tag]
+        tagNote.textContent = known.has(tag)
+            ? ''
+            : `"${tag}" is a new skill in the directory. Check the suggestions in case it already exists under another name.`
+        touched.add('tags')
+        renderTags()
+        update()
+        if (document.activeElement === tagInput) tagInput.dispatchEvent(new Event('focus'))
+    }
+
+    const renderPreview = (username, data) => {
+        slot('avatar').src = avatarUrl(usernamePattern.test(username) ? username : 'octocat', 112)
+        slot('name').textContent = data.name || 'Your name'
+        slot('role').textContent = data.role || 'Your role'
+        slot('bio').textContent = data.bio || 'A short line about you and what you build.'
+        slot('level').textContent = levelLabel(data.level) ?? 'Level'
+        slot('location').textContent = data.location ?? ''
+        slot('location').hidden = !data.location
+        slot('open').hidden = !data.open_to_work
+    }
+
+    const update = () => {
+        const username = text('username').toLowerCase()
+        const data = collect()
+        const result = validate.safeParse(
+            Object.fromEntries(Object.entries(data).filter(([key, value]) => key !== 'location' && value !== undefined)),
+        )
+        const errors = Object.fromEntries(
+            (result.success ? [] : formatIssues(result.error)).map(({ field, message }) => [field.split('.')[0], message]),
+        )
+        const nameProblem = usernameError(username)
+        if (nameProblem) errors.username = nameProblem
+
+        const file = toMarkdown(data)
+        const valid = Object.keys(errors).length === 0
+        output.textContent = file
+        filename.textContent = `portfolios/${username || 'your-username'}.md`
+        counter.textContent = `${data.bio.length}/${limits.bio.max}`
+        renderPreview(username, data)
+        showErrors(errors)
+
+        submit.textContent = existing ? 'Open your file on GitHub' : 'Open pull request on GitHub'
+        summary.textContent = valid
+            ? existing
+                ? 'Copy the file, open it on GitHub, replace everything and commit.'
+                : 'GitHub will open with your file ready. Commit it and open the pull request.'
+            : `${Object.keys(errors).length} thing${Object.keys(errors).length === 1 ? '' : 's'} left to fill in.`
+        return { valid, username, file, errors }
+    }
+
+    const checkGithub = async (username) => {
+        status.className = 'text-sm text-muted-foreground'
+        status.textContent = 'Checking GitHub...'
+        try {
+            const response = await fetch(`https://api.github.com/users/${username}`)
+            if (username !== text('username').toLowerCase()) return
+            if (response.status === 404) {
+                status.className = 'text-sm text-destructive'
+                status.textContent = 'No GitHub account has this username.'
+                return
+            }
+            if (!response.ok) {
+                status.textContent = 'Could not reach GitHub right now. You can still continue.'
+                return
+            }
+            const user = await response.json()
+            const days = (Date.now() - new Date(user.created_at).getTime()) / 86400000
+            if (!text('name') && user.name) input('name').value = user.name
+            status.className = days < minAccountDays ? 'text-sm text-destructive' : 'text-sm text-success'
+            status.textContent =
+                days < minAccountDays
+                    ? `Found @${user.login}, but accounts must be at least ${minAccountDays} days old to be added.`
+                    : `Found @${user.login} on GitHub.`
+            update()
+        } catch {
+            status.textContent = 'Could not reach GitHub right now. You can still continue.'
+        }
+    }
+
+    const fill = (profile) => {
+        input('name').value = profile.name
+        input('role').value = profile.role
+        input('bio').value = profile.bio
+        input('level').value = profile.level
+        input('location').value = profile.location ?? ''
+        form.querySelectorAll('[name="open_to_work"]').forEach((radio) => {
+            radio.checked = radio.value === String(profile.open_to_work)
+        })
+        links.forEach((link) => (input(link.key).value = profile[link.key] ?? ''))
+        tags = [...profile.tags]
+        renderTags()
+    }
+
+    const checkExisting = async (username, prefill) => {
+        const all = await loadProfiles().catch(() => new Map())
+        const profile = all.get(username)
+        existing = Boolean(profile)
+        mode.hidden = !existing
+        mode.textContent = existing
+            ? `@${username} is already in the directory. Your changes will update your existing file.`
+            : ''
+        if (profile && prefill) fill(profile)
+        update()
+    }
+
+    let timer
+    input('username').addEventListener('input', () => {
+        clearTimeout(timer)
+        status.textContent = ''
+        const username = text('username').toLowerCase()
+        if (usernameError(username)) {
+            existing = false
+            mode.hidden = true
+            return
+        }
+        timer = setTimeout(() => {
+            checkGithub(username)
+            checkExisting(username, !text('name') && !tags.length)
+        }, 500)
+    })
+
+    form.addEventListener('input', update)
+    form.addEventListener('change', update)
+    form.addEventListener('submit', (event) => event.preventDefault())
+    form.addEventListener('focusout', (event) => {
+        const name = event.target.name || event.target.dataset.name
+        if (!name) return
+        const link = links.find((item) => item.key === name && item.kind === 'handle')
+        if (link && event.target.value.trim()) event.target.value = extractHandle(link, event.target.value)
+        if (name === 'role') {
+            const known = roles.find((role) => role.toLowerCase() === text('role').toLowerCase())
+            if (known) event.target.value = known
+        }
+        touched.add(name)
+        update()
+    })
+
+    tagInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault()
+            addTag()
+        }
+    })
+    tagPicker.addEventListener('combobox:select', addTag)
+    document.querySelector('[data-add-tag]').addEventListener('click', addTag)
+
+    const reveal = () => {
+        const state = update()
+        if (state.valid) return state
+        touched = new Set([...form.querySelectorAll('[data-error]')].map((element) => element.dataset.error))
+        update()
+        const first = form.querySelector('[aria-invalid="true"]')
+        if (first) first.focus()
+        else summary.textContent = Object.values(state.errors).join('. ')
+        return null
+    }
+
+    submit.addEventListener('click', async () => {
+        const state = reveal()
+        if (!state) return
+        if (existing) {
+            await navigator.clipboard.writeText(state.file).catch(() => {})
+            summary.textContent = 'File copied. Paste it over the old content on GitHub and commit.'
+            window.open(editFileUrl(state.username), '_blank', 'noopener')
+            return
+        }
+        window.open(newFileUrl(state.username, state.file), '_blank', 'noopener')
+    })
+
+    copy.addEventListener('click', async () => {
+        const state = update()
+        await navigator.clipboard.writeText(state.file)
+        copy.textContent = 'Copied'
+        setTimeout(() => (copy.textContent = 'Copy file'), 1500)
+    })
+
+    const requested = new URLSearchParams(location.search).get('user')
+    if (requested) {
+        input('username').value = requested
+        checkGithub(requested.toLowerCase())
+        checkExisting(requested.toLowerCase(), true)
+    }
+    renderTags()
+    update()
+</script>

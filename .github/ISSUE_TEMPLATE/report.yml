@@ -1,0 +1,28 @@
+name: Report a profile
+description: Flag spam, abuse, impersonation or broken content.
+labels: [report]
+body:
+    - type: input
+      id: profile
+      attributes:
+          label: Profile
+          description: The GitHub username, like @octocat
+      validations:
+          required: true
+    - type: dropdown
+      id: reason
+      attributes:
+          label: Reason
+          options:
+              - Spam or advertising
+              - Offensive content
+              - Impersonation
+              - Broken or harmful link
+              - Other
+      validations:
+          required: true
+    - type: textarea
+      id: details
+      attributes:
+          label: Details
+          description: Anything that helps us check it quickly.

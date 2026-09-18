@@ -1,0 +1,43 @@
+---
+import Logo from '@/components/shared/logo.astro'
+import { href } from '@/lib/href.js'
+import { repoUrl } from '@/lib/site.js'
+
+const path = Astro.url.pathname
+const links = [
+    { to: '', label: 'Directory' },
+    { to: 'tags/', label: 'Skills' },
+]
+const current = (to) => (to ? path.startsWith(href(to)) : path === href())
+---
+
+<header class="border-b border-border bg-background/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+        <Logo />
+        <nav aria-label="Main" class="flex items-center gap-1 text-sm">
+            {
+                links.map((link) => (
+                    <a
+                        href={href(link.to)}
+                        aria-current={current(link.to) ? 'page' : undefined}
+                        class="rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground aria-[current=page]:text-foreground"
+                    >
+                        {link.label}
+                    </a>
+                ))
+            }
+            <a
+                href={repoUrl}
+                class="rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+                GitHub
+            </a>
+            <a
+                href={href('add/')}
+                class="ml-1 rounded-xl border border-border bg-card px-4 py-2 font-medium text-card-foreground shadow-sm hover:bg-accent"
+            >
+                Add yours
+            </a>
+        </nav>
+    </div>
+</header>

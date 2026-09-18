@@ -1,0 +1,72 @@
+---
+import Tag from '@/components/shared/tag.astro'
+import { avatarUrl, href } from '@/lib/href.js'
+import { levelLabel } from '@/lib/options.js'
+import { filterData } from '@/lib/profiles.js'
+
+const { profile, heading = 'h3', preview = false } = Astro.props
+const Heading = heading
+const shownTags = preview ? profile.tags : profile.tags.slice(0, 4)
+const hiddenTags = profile.tags.length - shownTags.length
+---
+
+<article
+    class="relative flex flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm transition motion-safe:hover:-translate-y-0.5 hover:shadow-md"
+    {...preview ? {} : filterData(profile)}
+>
+    <div class="flex items-center gap-3">
+        <img
+            data-slot="avatar"
+            src={avatarUrl(profile.username, 112)}
+            alt=""
+            width="56"
+            height="56"
+            loading="lazy"
+            decoding="async"
+            class="size-14 shrink-0 rounded-full border border-border bg-muted"
+        />
+        <div class="min-w-0">
+            <Heading class="truncate text-lg leading-tight font-semibold">
+                {
+                    preview ? (
+                        <span data-slot="name">{profile.name}</span>
+                    ) : (
+                        <a href={href(`@${profile.username}/`)} class="after:absolute after:inset-0 after:rounded-xl">
+                            {profile.name}
+                        </a>
+                    )
+                }
+            </Heading>
+            <p data-slot="role" class="truncate text-sm text-muted-foreground">{profile.role}</p>
+        </div>
+    </div>
+
+    <p data-slot="bio" class="line-clamp-3 text-sm leading-relaxed">{profile.bio}</p>
+
+    <div data-slot="tags" class="flex flex-wrap gap-1.5">
+        {shownTags.map((tag) => <Tag tag={tag} link={!preview} />)}
+        {hiddenTags > 0 && <span class="px-1 font-mono text-xs text-muted-foreground">+{hiddenTags}</span>}
+    </div>
+    {
+        preview && (
+            <template data-slot="tag-template">
+                <Tag tag="" link={false} />
+            </template>
+        )
+    }
+
+    <div
+        class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 font-mono text-xs text-muted-foreground"
+    >
+        <span data-slot="level">{levelLabel(profile.level)}</span>
+        <span data-slot="location" hidden={!profile.location}>{profile.location}</span>
+        <span
+            data-slot="open"
+            hidden={!profile.open_to_work}
+            class="ml-auto inline-flex items-center gap-1.5 font-semibold text-success"
+        >
+            <span class="size-1.5 rounded-full bg-success" aria-hidden="true"></span>
+            Open to work
+        </span>
+    </div>
+</article>

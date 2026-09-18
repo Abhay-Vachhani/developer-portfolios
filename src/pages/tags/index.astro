@@ -1,0 +1,45 @@
+---
+import Base from '@/layouts/base.astro'
+import { href } from '@/lib/href.js'
+import { countTags, getProfiles } from '@/lib/profiles.js'
+
+const tags = countTags(await getProfiles())
+---
+
+<Base
+    title="Browse developers by skill"
+    description="Every skill in the directory, from JavaScript to Kubernetes. Pick one to see the developers who work with it."
+    path="tags/"
+>
+    <section class="mx-auto flex max-w-4xl flex-col gap-10 px-4 pt-12 sm:pt-20">
+        <div class="flex flex-col gap-3">
+            <p class="font-mono text-xs tracking-widest text-muted-foreground uppercase">{tags.length} skills</p>
+            <h1 class="font-semibold text-5xl tracking-tight">Browse by skill</h1>
+            <p class="max-w-2xl text-lg text-muted-foreground">
+                Every skill developers have added to their profiles. Pick one to see who works with it.
+            </p>
+        </div>
+        {
+            tags.length === 0 && (
+                <p class="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
+                    No skills yet. They appear here as soon as the first developers add their profiles.
+                </p>
+            )
+        }
+        <ul class="flex flex-wrap gap-2">
+            {
+                tags.map(({ tag, count }) => (
+                    <li>
+                        <a
+                            href={href(`tags/${tag}/`)}
+                            class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-card-foreground hover:bg-accent"
+                        >
+                            <span class="font-mono text-sm">{tag}</span>
+                            <span class="text-xs text-muted-foreground">{count}</span>
+                        </a>
+                    </li>
+                ))
+            }
+        </ul>
+    </section>
+</Base>

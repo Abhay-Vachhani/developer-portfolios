@@ -1,0 +1,140 @@
+---
+import Tag from '@/components/shared/tag.astro'
+import Base from '@/layouts/base.astro'
+import { absolute, avatarUrl, githubUrl, href } from '@/lib/href.js'
+import { profileLinks } from '@/lib/links.js'
+import { levelLabel } from '@/lib/options.js'
+import { getProfiles, profileSummary, profileTitle } from '@/lib/profiles.js'
+import { deleteFileUrl, reportUrl } from '@/lib/site.js'
+
+export const getStaticPaths = async () => {
+    const profiles = await getProfiles()
+    return profiles.map((profile) => ({ params: { username: profile.username }, props: { profile } }))
+}
+
+const { profile } = Astro.props
+const path = `@${profile.username}/`
+const links = profileLinks(profile)
+const primary = profile.portfolio
+    ? { url: profile.portfolio, label: 'Visit portfolio' }
+    : { url: githubUrl(profile.username), label: 'View GitHub' }
+const secondary = links.filter((link) => link.key !== 'portfolio')
+
+const description = `${profile.bio} ${profileSummary(profile)}.`
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: absolute(path, Astro.site),
+    mainEntity: {
+        '@type': 'Person',
+        name: profile.name,
+        alternateName: `@${profile.username}`,
+        identifier: profile.username,
+        description: profile.bio,
+        jobTitle: profile.role,
+        image: avatarUrl(profile.username, 460),
+        knowsAbout: profile.tags,
+        url: profile.portfolio ?? githubUrl(profile.username),
+        sameAs: [githubUrl(profile.username), ...links.map((link) => link.url)],
+        ...(profile.location && { homeLocation: { '@type': 'Country', name: profile.location } }),
+    },
+}
+const facts = [
+    { label: 'Level', value: levelLabel(profile.level) },
+    { label: 'Country', value: profile.location },
+    { label: 'Status', value: profile.open_to_work ? 'Open to work' : 'Not looking right now' },
+].filter((fact) => fact.value)
+---
+
+<Base
+    title={profileTitle(profile)}
+    description={description}
+    path={path}
+    type="profile"
+    image={avatarUrl(profile.username, 460)}
+    imageAlt={`${profile.name} on GitHub`}
+    jsonLd={jsonLd}
+>
+    <article class="mx-auto flex max-w-3xl flex-col gap-10 px-4 pt-12 sm:pt-20">
+        <nav aria-label="Breadcrumb" class="font-mono text-xs text-muted-foreground">
+            <a href={href()} class="hover:text-foreground">Directory</a>
+            <span aria-hidden="true"> / </span>
+            <span aria-current="page">@{profile.username}</span>
+        </nav>
+
+        <header class="flex flex-col gap-6 sm:flex-row sm:items-center">
+            <img
+                src={avatarUrl(profile.username, 240)}
+                alt={`${profile.name}'s GitHub avatar`}
+                width="120"
+                height="120"
+                class="size-28 rounded-full border border-border bg-muted shadow-sm"
+            />
+            <div class="flex flex-col gap-2">
+                <p class="font-mono text-xs tracking-widest text-muted-foreground uppercase">{profile.role}</p>
+                <h1 class="font-semibold text-5xl leading-tight tracking-tight">{profile.name}</h1>
+                <p class="font-mono text-sm text-muted-foreground">@{profile.username}</p>
+            </div>
+        </header>
+
+        <p class="text-xl leading-relaxed">{profile.bio}</p>
+
+        <div class="flex flex-wrap gap-3">
+            <a
+                href={primary.url}
+                rel="me noopener noreferrer"
+                class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
+            >
+                {primary.label}
+            </a>
+            {
+                profile.portfolio && (
+                    <a
+                        href={githubUrl(profile.username)}
+                        rel="me noopener noreferrer"
+                        class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
+                    >
+                        GitHub
+                    </a>
+                )
+            }
+            {
+                secondary.map((link) => (
+                    <a
+                        href={link.url}
+                        rel="me noopener noreferrer"
+                        class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
+                    >
+                        {link.label}
+                    </a>
+                ))
+            }
+        </div>
+
+        <section aria-labelledby="skills-title" class="flex flex-col gap-3">
+            <h2 id="skills-title" class="font-mono text-xs tracking-widest text-muted-foreground uppercase">Skills</h2>
+            <div class="flex flex-wrap gap-2">
+                {profile.tags.map((tag) => <Tag tag={tag} />)}
+            </div>
+        </section>
+
+        <dl class="grid gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground sm:grid-cols-3">
+            {
+                facts.map((fact) => (
+                    <div class="flex flex-col gap-1">
+                        <dt class="font-mono text-xs tracking-widest text-muted-foreground uppercase">{fact.label}</dt>
+                        <dd class:list={['font-medium', fact.label === 'Status' && profile.open_to_work && 'text-success']}>
+                            {fact.value}
+                        </dd>
+                    </div>
+                ))
+            }
+        </dl>
+
+        <footer class="flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-6 text-sm text-muted-foreground">
+            <a href={href(`add/?user=${profile.username}`)} class="hover:text-foreground">Is this you? Edit profile</a>
+            <a href={deleteFileUrl(profile.username)} class="hover:text-foreground">Remove my profile</a>
+            <a href={reportUrl(profile.username)} class="hover:text-foreground">Report this profile</a>
+        </footer>
+    </article>
+</Base>

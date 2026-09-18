@@ -1,0 +1,16 @@
+---
+import { href } from '@/lib/href.js'
+
+const { tag, link = true } = Astro.props
+const classes = 'rounded-md bg-secondary px-2 py-0.5 font-mono text-xs text-secondary-foreground'
+---
+
+{
+    link ? (
+        <a href={href(`tags/${tag}/`)} class:list={[classes, 'relative z-10 hover:bg-accent']}>
+            {tag}
+        </a>
+    ) : (
+        <span class={classes}>{tag}</span>
+    )
+}
