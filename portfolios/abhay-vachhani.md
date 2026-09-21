@@ -10,5 +10,6 @@ portfolio: "https://txtnode.com/abhay-vachhani"
 blog: "https://txtnode.com"
 linkedin: abhay-vachhani
 x: abhay_vachhani_
+devto: abhay-vachhani
 npm: abhay-vachhani
 ---
