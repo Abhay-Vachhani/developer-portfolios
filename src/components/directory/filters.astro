@@ -31,15 +31,23 @@ const selects = [
     {
         name: 'location',
         title: 'Country',
-        align: 'end',
         searchable: locations.length > 8,
         options: [{ value: '', label: 'Anywhere' }, ...locations.map((location) => ({ value: location, label: location }))],
+    },
+    {
+        name: 'sort',
+        title: 'Order',
+        align: 'end',
+        options: [
+            { value: '', label: 'Shuffled' },
+            { value: 'name', label: 'Name, A to Z' },
+        ],
     },
 ]
 ---
 
-<form data-filters hidden class="grid gap-3 rounded-2xl border border-border bg-muted p-4 sm:grid-cols-2 lg:grid-cols-6">
-    <label class="flex flex-col gap-1.5 sm:col-span-2">
+<form data-filters hidden class="grid gap-3 rounded-2xl border border-border bg-muted p-4 sm:grid-cols-2 lg:grid-cols-8">
+    <label class="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
         <span class={label}>Search</span>
         <input
             type="search"
@@ -67,27 +75,13 @@ const selects = [
             </div>
         ))
     }
-    <div class="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-6">
-        <label class="inline-flex items-center gap-2 text-sm">
+    <div class="flex items-end lg:col-span-8">
+        <label
+            class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-card-foreground hover:bg-accent has-checked:border-primary has-checked:bg-accent"
+        >
             <input type="checkbox" name="open" value="1" class="size-4 accent-primary" />
             Open to work only
         </label>
-        <div class="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <span id="filter-sort-label">Order</span>
-            <div class="w-40">
-                <Select
-                    id="filter-sort"
-                    name="sort"
-                    options={[
-                        { value: '', label: 'Shuffled' },
-                        { value: 'name', label: 'Name, A to Z' },
-                    ]}
-                    labelledby="filter-sort-label filter-sort"
-                    size="sm"
-                    align="end"
-                />
-            </div>
-        </div>
     </div>
 </form>
 

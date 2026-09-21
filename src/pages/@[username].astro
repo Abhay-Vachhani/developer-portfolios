@@ -82,6 +82,7 @@ const facts = [
         <div class="flex flex-wrap gap-3">
             <a
                 href={primary.url}
+                target="_blank"
                 rel="me noopener noreferrer"
                 class="rounded-xl bg-primary px-5 py-3 font-medium text-primary-foreground shadow-sm hover:opacity-90"
             >
@@ -91,6 +92,7 @@ const facts = [
                 profile.portfolio && (
                     <a
                         href={githubUrl(profile.username)}
+                        target="_blank"
                         rel="me noopener noreferrer"
                         class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
                     >
@@ -102,6 +104,7 @@ const facts = [
                 secondary.map((link) => (
                     <a
                         href={link.url}
+                        target="_blank"
                         rel="me noopener noreferrer"
                         class="rounded-xl border border-border bg-card px-5 py-3 font-medium text-card-foreground hover:bg-accent"
                     >
