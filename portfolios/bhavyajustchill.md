@@ -8,6 +8,7 @@ open_to_work: true
 location: India
 portfolio: "https://bhavyajustchill.vercel.app"
 blog: "https://bhavyajustchill.vercel.app/blog"
+devto: bhavyajustchill
 youtube: bhavyajustchill
 npm: bhavyajustchill
 ---
